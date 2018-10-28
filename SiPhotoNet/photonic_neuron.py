@@ -22,8 +22,12 @@ import numpy as np
  
 class neuron:
     def __init__(self, weights, wavelength):
-        self.weights = weights
-        self.wavelength = wavelength
+        self.L = 3e-5 # copy heidis length
+        self.n = weights # function of weight value (maybe current supplied to heater)
+        self.a = 0.9
+        self.r1 = 0.85
+        self.r2 = 0.85
+        self.output_wavelength = wavelength
     
     def nextState(self, waveguide):
         tunedWaveguides = self.weightBank(waveguide)
@@ -35,18 +39,18 @@ class neuron:
         thrus = []
         drops = []
         for i,signal in enumerate(waveguide):
-            mr = neuron.mrr(self.weights[i])
+            mr = self.mrr(i, signal['wavelength'])
             thrus.append(signal['intensity'] * mr['thru'])
             drops.append(signal['intensity'] * mr['drop'])
         return {'thrus': thrus, 'drops': drops}
     
-    @staticmethod
-    def mrr(weight, a = 0.85, r1 = 0.85, r2 = 0.85):
-        # calculate phi from weight (and wavelength i would assume)
-        phi = -1
-        numerator_t = (r2*a)**2 + r1**2 - 2*r1*r2*a*np.cos(phi)
-        numerator_d = (1-r1**2)*(1-r2**2)*a
-        denominator = 1 + (a*r1*r2)**2 - 2*r1*r2*a*np.cos(phi)
+    def mrr(self, i, wavelength):
+        # calculate phi from weight and wavelength
+        k = 2 * np.pi * wavelength
+        phi = self.n[i] * self.L * k
+        numerator_t = (self.r2*self.a)**2 + self.r1**2 - 2*self.r1*self.r2*self.a*np.cos(phi)
+        numerator_d = (1-self.r1**2)*(1-self.r2**2)*self.a
+        denominator = 1 + (self.a*self.r1*self.r2)**2 - 2*self.r1*self.r2*self.a*np.cos(phi)
         return {'thru': numerator_t/denominator, 'drop': numerator_d/denominator}
     
     def photodiode(self, thru, drop):

@@ -23,7 +23,7 @@ import photonic_neuron as photoneuron
 import copy
 
 class network:
-    def __init__(self, weights, wavelengths = [1550-9], intensities = [1]):
+    def __init__(self, weights, wavelengths = [1550e-9], intensities = [1]):
         self.neurons = []
         self.waveguide = []
         for i,row in enumerate(weights):
