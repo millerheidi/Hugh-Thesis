@@ -23,17 +23,17 @@ import photonic_neuron as photoneuron
 import copy
 
 class network:
-    def __init__(self, weights, wavelengths = [1550e-9], intensities = [1]):
+    def __init__(self, weights, wavelengths = [1550e-9], powers = [1]):
         self.neurons = []
         self.waveguide = []
-        for i,row in enumerate(weights):
-            self.neurons.append(photoneuron.neuron(row, wavelengths[i]))
-            self.waveguide.append({'wavelength': wavelengths[i], 'intensity': intensities[i]})
+        for i,weightbank in enumerate(weights):
+            self.neurons.append(photoneuron.neuron(weightbank, wavelengths[i]))
+            self.waveguide.append({'wavelength': wavelengths[i], 'power': powers[i]})
     
     def advance(self): #TODO
         new_waveguide = copy.deepcopy(self.waveguide)
         for i,neuron in enumerate(self.neurons):
-            new_waveguide[i]['intensity'] = neuron.nextState(self.waveguide)
+            new_waveguide[i]['power'] = neuron.nextState(self.waveguide)
         self.waveguide = new_waveguide
             
     def simulate(self): #TODO
