@@ -23,8 +23,11 @@ import numpy as np
 import copy
  
 class neuron:
+    """
+        Neurons take a list of weights
+    """
     def __init__(self, weights, wavelength, mrr_radius = 3e-5 , a = 0.99, r1 = 0.9, r2 = 0.9, output_power = 1.0):
-        self.weights = weights
+        self.currents = neuron.weightToHeaterCurrent(weights)
         self.output_wavelength = wavelength
         self.output_power = output_power
         
@@ -32,7 +35,10 @@ class neuron:
         self.a = a
         self.r1 = r1
         self.r2 = r2
-        
+    
+    def __str__(self):
+        return str(self.output_wavelength) + 'm wavelength neuron with weights:' + str(self.weights)
+    
     def act(self, incident):
         waveguide = copy.deepcopy(incident)
         tunedWaveguides = self.weightBank(waveguide)
@@ -43,15 +49,12 @@ class neuron:
     def weightBank(self, waveguide):
         thrus = []
         drops = []
-        for signal in waveguide:
-            thru = signal['power']
-            drop = signal['power']
-            for weight in self.weights:
-                MRR = self.mrr(weight, signal['wavelength'])
-                thru *= MRR['thru']
-                drop *= MRR['drop']
-            thrus.append(thru)
-            drops.append(drop)
+        for heater in self.currents:
+            MRR = self.mrr(weight, waveguide)
+            thru *= MRR['thru']
+            drop *= MRR['drop']
+        thrus.append(thru)
+        drops.append(drop)
         return {'thrus': thrus, 'drops': drops} 
     
     def detuneByWavelength(self, wavelength, n_0 = np.sqrt(12), i_mod = 0.0, coeff_mod = 5e2, i_heater = 0.0, coeff = 5e2):
@@ -85,4 +88,7 @@ class neuron:
         denominator = 1 + (a*r)**2 - 2*r*a*np.cos(phi)
         return numerator/denominator
     
+    @staticmethod
+    def weightToHeaterCurrent(weights):
+        return 1e-3 * weights
 
