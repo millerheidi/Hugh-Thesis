@@ -7,13 +7,13 @@
 
 """
 import matplotlib.pyplot as plt
-import photonic_network as network
+from photonic_network import network
 import numpy as np
 
 def main():
-    net = network.network([[5,-1,0.05],[-1,5,0.05]])
-    print(net.N)
-    print(net.waveguide)
-    for neuron in net.neurons:
+    sys = network([[5,-1,0.05],[-1,5,0.05]])
+    print(sys.N)
+    print(sys.waveguide)
+    for neuron in sys.neurons:
         print(neuron)
 if __name__ == '__main__': main()
