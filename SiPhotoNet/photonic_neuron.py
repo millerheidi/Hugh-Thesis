@@ -101,7 +101,6 @@ class neuron:
             plt.plot(lambdas*1e9, self.mrr(weight+(i/2.0), lambdas)[:,0])  # update the data.
             plt.show()
             
-        
 #        legend = []
 #        for w in self.weights:
 #            legend.append('Pass:' + str(w))
