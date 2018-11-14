@@ -33,7 +33,7 @@ class network:
         weights.
         
     """
-    def __init__(self, weights, wavelengths = [1550e-9], powers = [1.], weightsIn = [], wavelengthIn = None, signalIn = []):
+    def __init__(self, weights, wavelengths = [1515e-9], powers = [1.], weightsIn = [], wavelengthIn = None, signalIn = []):
         self.N = len(weights) # number of neurons (network size)
         self.external = len(weightsIn) > 0 # external input to network (no dedicated neuron)
         for i,weight in enumerate(weightsIn): weights[i].append(weight)
@@ -56,6 +56,7 @@ class network:
         
         Future note: maybe account for input signal going infinitely according 
         to periodic function e.g. always is sin() f'n
+        
     """
     def simulate(self): 
         done = False
@@ -73,6 +74,7 @@ class network:
     
     """
         This function uses assert to ensure initialization worked properly
+        
     """
     def testConstraints(self):
         assert(len(self.neurons) == self.N) # network rank is number of neurons

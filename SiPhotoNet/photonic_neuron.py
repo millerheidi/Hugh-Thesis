@@ -88,18 +88,12 @@ class neuron:
     
     def plotWeightBank(self):
         import matplotlib.pyplot as plt
-        import matplotlib.animation as animation
-        fig, ax = plt.subplots()
-        weight = 1.0
-        
-        lambdas = np.linspace(1500e-9,1525e-9,500)
+        lambdas = np.linspace(1500e-9,1550e-9,500)
         plt.figure()
-        plt.plot(lambdas*1e9, self.mrr(weight, lambdas)[:,0])
-        for i in range(50):
-            yield
-            plt.figure()
-            plt.plot(lambdas*1e9, self.mrr(weight+(i/2.0), lambdas)[:,0])  # update the data.
-            plt.show()
+        for i,weight in enumerate(self.weights):
+            plt.plot(lambdas*1e9, self.mrr(weight, lambdas)[:,0], color="C" + str(i))
+        plt.vlines(self.output_wavelength*1e9, 0, 1)
+        plt.show()
             
 #        legend = []
 #        for w in self.weights:
