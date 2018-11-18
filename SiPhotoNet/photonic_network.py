@@ -47,7 +47,7 @@ import copy
 
 class network:
 
-    def __init__(self, weights, wavelengths = [1515e-9], powers = [1.], weightsIn = [], wavelengthIn = None, signalIn = []):
+    def __init__(self, weights, wavelengths = [1550e-9], powers = [25.], weightsIn = [], wavelengthIn = None, signalIn = []):
     """
         A network instance has a list of neurons, and a waveguide (a list
         of signals). Need to provide a square matrix of weights to the network.
@@ -88,8 +88,10 @@ class network:
             yield
             split_waveguide = copy.deepcopy(self.waveguide)
             split_waveguide[:,1] /= self.N
+            
             for i,node in enumerate(self.neurons):
                 self.waveguide[i,1] *= node.act(split_waveguide)
+            
             if self.external: 
                 self.waveguide[self.N,1] = self.signalIn.pop(0)
                 if len(self.signalIn) == 0:

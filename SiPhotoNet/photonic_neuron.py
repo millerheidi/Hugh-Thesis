@@ -11,7 +11,7 @@ import copy
  
 class neuron:
 
-    def __init__(self, weights, wavelength, mrr_radius = 3e-5 , a = 0.99, r1 = 0.85, r2 = 0.85):
+    def __init__(self, weights, wavelength, mrr_radius = 6e-5 , a = 0.99, r1 = 0.85, r2 = 0.85):
         """
             Neuron takes a list of weights and an output wavelength.
             
@@ -84,7 +84,7 @@ class neuron:
         current_bias = 0.0 # [A]
         current_thru = sum(responsivity*p_thru) # [A]
         current_drop = sum(responsivity*p_drop) # [A]
-        return current_thru - current_bias - current_drop # [A]
+        return - current_thru + current_bias + current_drop # [A]
     
     def modulatorTransmission(self, current):
         """
@@ -106,10 +106,13 @@ class neuron:
             Visual representation of weight bank transfer functions
         """
         import matplotlib.pyplot as plt
-        lambdas = np.linspace(1500e-9,1550e-9,500)
+        lambdas = np.linspace(self.output_wavelength - 5e-9,self.output_wavelength + 5e-9,500)
         plt.figure()
         for i,weight in enumerate(self.weights):
             plt.plot(lambdas*1e9, self.mrr(weight, lambdas)[:,0], color="C" + str(i))
+            plt.plot(lambdas*1e9, self.mrr(weight, lambdas)[:,1], "--C" + str(i))
+            plt.plot(lambdas*1e9, self.mrr(weight, lambdas)[:,0]+self.mrr(weight, lambdas)[:,1])
+        plt.legend(['Weight: ' + str(w) for i in range(2) for w in self.weights])
         plt.vlines(self.output_wavelength*1e9, 0, 1)
         plt.show()
             
