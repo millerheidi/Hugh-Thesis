@@ -1,22 +1,44 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-    Class file for network 
+    Class file for network simulator.
     
     @author: Hugh Morison
     
     --- SIMULATION STRUCTURE ---
     
-    Waveguide structure will contain different lights
-    Lights will have wavelengths and intensity/power
-    Network has a waveguide and a list of neurons
-    Each neuron has a bank of MRRs 
-    Number of resonators in a neuron = Number of wavelengths in waveguide = Number of neurons in network
+    Waveguide structure will contain different lights from laser pumps, which 
+    each have wavelengths and power.
+    
+    Collection of neurons in the network will be initialized with a weight bank
+    and a list of wavelengths each neuron modulates.
     
     
-    Simulation is started specifying number of neurons and weight matrices
-    Instanstiate waveguide, add number of signals with 0 power initially
-    Instantitate list of neurons, each neuron with N tuning params
+    Simulation is started specifying weight matrices, output wavelengths, and
+    inital pump powers. Optionally, add a list of input weights, an input 
+    wavelength, and the time varying input signal (this will limit the 
+    duration of the simulation)
+    After initializing the network, call instance.simulate() to obatin the
+    generator. With no input signal defined, the generator will generate new 
+    network states infinitely. 
+    
+    TODO:
+        - Add network state accessors.
+
+    
+    --- WEIGHT MATRIX CONVENTION ---
+    
+    Adopting the convention that the weight matrix is NxN (fully connected)
+    with an extra column of weights when the network has external input.
+         _                    _  _   _
+        | w11  w12  w13 .. w1m || w1i |
+    W = | w21  ..          w2m || w2i | where  W[n][m] is the weight of the mth
+        | ..        ..         || ..  |        MRR in the nth neuron (modulating
+        | wn1           .. wnm || wni |        the mth signal from the waveguide)
+         -                    -  -   -         and W[n][N+1] weights the input 
+                                               signal to the nth waveguide 
+         
+    the nth neuron in the network modulates the nth output signal
 
 """
 from photonic_neuron import neuron
@@ -24,6 +46,8 @@ import numpy as np
 import copy
 
 class network:
+
+    def __init__(self, weights, wavelengths = [1515e-9], powers = [1.], weightsIn = [], wavelengthIn = None, signalIn = []):
     """
         A network instance has a list of neurons, and a waveguide (a list
         of signals). Need to provide a square matrix of weights to the network.
@@ -33,7 +57,6 @@ class network:
         weights.
         
     """
-    def __init__(self, weights, wavelengths = [1515e-9], powers = [1.], weightsIn = [], wavelengthIn = None, signalIn = []):
         self.N = len(weights) # number of neurons (network size)
         self.external = len(weightsIn) > 0 # external input to network (no dedicated neuron)
         for i,weight in enumerate(weightsIn): weights[i].append(weight)
@@ -50,6 +73,8 @@ class network:
         self.waveguide = np.array(waveguide) # waveguide[wavelength, power]
         self.testConstraints()
     
+
+    def simulate(self): 
     """
         Generator will yield new values infinitely* (bounded by the calling 
         loop) or over the length of the input signal if there is one
@@ -58,7 +83,6 @@ class network:
         to periodic function e.g. always is sin() f'n
         
     """
-    def simulate(self): 
         done = False
         while not done:
             yield
@@ -72,11 +96,11 @@ class network:
                     done = True
         yield
     
+
+    def testConstraints(self):
     """
         This function uses assert to ensure initialization worked properly
-        
     """
-    def testConstraints(self):
         assert(len(self.neurons) == self.N) # network rank is number of neurons
         if self.external: # waveguide has N signals (+1 external signal)
             assert(len(self.waveguide) == self.N + 1) 
