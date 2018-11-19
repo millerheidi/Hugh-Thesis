@@ -8,10 +8,11 @@
 """
 import numpy as np
 import copy
- 
+import matplotlib.pyplot as plt
+
 class neuron:
 
-    def __init__(self, weights, wavelength, mrr_radius = 6e-5 , a = 0.99, r1 = 0.85, r2 = 0.85):
+    def __init__(self, weights, wavelength, net_wavelengths = [], mrr_radius = 6e-5, a = 1, r1 = 0.92, r2 = 0.92):
         """
             Neuron takes a list of weights and an output wavelength.
             
@@ -19,7 +20,7 @@ class neuron:
             self-coupling coefficients (r1 and r2) can be changed.
         """
         self.output_wavelength = wavelength
-        self.weights = weights
+        self.weights = self.weightToHeaterCurrent(weights, net_wavelengths)
         self.mrr_radius = mrr_radius
         self.a = a
         self.r1 = r1
@@ -48,10 +49,11 @@ class neuron:
         """
         thru = 1.0
         drop = 1.0
-        for weight in self.weights:
-            MRR = self.mrr(weight, wavelengths)
+        for current in self.weights:
+            MRR = self.mrr(current, wavelengths)
+            drop = thru * MRR[:,1]
             thru *= MRR[:,0]
-            drop *= MRR[:,1]    
+                
         return thru, drop
     
     def detuneByWavelength(self, wavelength, n_0 = np.sqrt(12), i_mod = 0.0, coeff_mod = 5e2, i_heater = 0.0, coeff = 5e2):
@@ -61,13 +63,12 @@ class neuron:
         """
         return (2*np.pi*self.mrr_radius/wavelength) * (n_0 + i_mod*coeff_mod + coeff*i_heater**2) 
     
-    def mrr(self, weight, wavelengths):
+    def mrr(self, heater, wavelengths):
         """
         """
         a = self.a
         r1 = self.r1
         r2 = self.r2
-        heater = self.weightToHeaterCurrent(weight) # [A]
         phis = self.detuneByWavelength(wavelengths, i_heater=heater) # [rad]
         numerator_t = (r2*a)**2 - 2*r1*r2*a*np.cos(phis) + r1**2 
         numerator_d = (1-r1**2)*(1-r2**2)*a
@@ -96,16 +97,18 @@ class neuron:
         denominator = 1 + (a*r)**2 - 2*r*a*np.cos(phi)
         return numerator/denominator
     
-    def weightToHeaterCurrent(self, weight):
+    def weightToHeaterCurrent(self, weights, wavelengths):
         """
         """
-        return weight*1e-3 # [A]
+        wavelengths = np.array(wavelengths)
+        weights = np.array(weights)
+        
+        return weights*1e-3 # [A]
     
     def plotWeightBank(self):
         """
             Visual representation of weight bank transfer functions
         """
-        import matplotlib.pyplot as plt
         lambdas = np.linspace(self.output_wavelength - 5e-9,self.output_wavelength + 5e-9,500)
         plt.figure()
         for i,weight in enumerate(self.weights):

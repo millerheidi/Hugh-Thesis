@@ -47,21 +47,21 @@ import copy
 
 class network:
 
-    def __init__(self, weights, wavelengths = [1550e-9], powers = [25.], weightsIn = [], wavelengthIn = None, signalIn = []):
-    """
-        A network instance has a list of neurons, and a waveguide (a list
-        of signals). Need to provide a square matrix of weights to the network.
-        
-        An input signal can also be provided to the simulation, but the 
-        wavelength of the signal needs to be provided as well as the input 
-        weights.
-        
-    """
+    def __init__(self, weights, wavelengths = [1551.1e-9], powers = [25e-3], weightsIn = [], wavelengthIn = None, signalIn = []):
+        """
+            A network instance has a list of neurons, and a waveguide (a list
+            of signals). Need to provide a square matrix of weights to the network.
+            
+            An input signal can also be provided to the simulation, but the 
+            wavelength of the signal needs to be provided as well as the input 
+            weights.
+            
+        """
         self.N = len(weights) # number of neurons (network size)
         self.external = len(weightsIn) > 0 # external input to network (no dedicated neuron)
         for i,weight in enumerate(weightsIn): weights[i].append(weight)
         
-        wavelengths = [wavelengths[0] + i*1e-9 for i in range(self.N)] # spectral spacing of signal
+        wavelengths = [wavelengths[0] + 2*i*1e-9 for i in range(self.N)] # spectral spacing of signal
         powers = [powers[0] for i in range(self.N)] # inital power of pumps
         
         self.neurons = [neuron(weights[i], wavelengths[i]) for i in range(self.N)]
@@ -73,16 +73,23 @@ class network:
         self.waveguide = np.array(waveguide) # waveguide[wavelength, power]
         self.testConstraints()
     
-
+    
+    def getState(self, i):
+        """
+            Get state of ith waveguide signal.
+        """
+        assert(i > 0 and i <= self.N +1)
+        return self.waveguide[i-1,1]
+    
     def simulate(self): 
-    """
-        Generator will yield new values infinitely* (bounded by the calling 
-        loop) or over the length of the input signal if there is one
-        
-        Future note: maybe account for input signal going infinitely according 
-        to periodic function e.g. always is sin() f'n
-        
-    """
+        """
+            Generator will yield new values infinitely* (bounded by the calling 
+            loop) or over the length of the input signal if there is one
+            
+            Future note: maybe account for input signal going infinitely according 
+            to periodic function e.g. always is sin() f'n
+            
+        """
         done = False
         while not done:
             yield
@@ -100,9 +107,9 @@ class network:
     
 
     def testConstraints(self):
-    """
-        This function uses assert to ensure initialization worked properly
-    """
+        """
+            This function uses assert to ensure initialization worked properly
+        """
         assert(len(self.neurons) == self.N) # network rank is number of neurons
         if self.external: # waveguide has N signals (+1 external signal)
             assert(len(self.waveguide) == self.N + 1) 
