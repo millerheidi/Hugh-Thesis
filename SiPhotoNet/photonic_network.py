@@ -57,21 +57,23 @@ class network:
             weights.
             
         """
+        
         self.N = len(weights) # number of neurons (network size)
         self.external = len(weightsIn) > 0 # external input to network (no dedicated neuron)
         for i,weight in enumerate(weightsIn): weights[i].append(weight)
         
         wavelengths = [wavelengths[0] + 2*i*1e-9 for i in range(self.N)] # spectral spacing of signal
-        powers = [powers[0] for i in range(self.N)] # inital power of pumps
+        self.powers = [powers[0] for i in range(self.N)] # inital power of pumps
         
         self.neurons = [neuron(weights[i], wavelengths[i]) for i in range(self.N)]
-        waveguide = [[wavelengths[i], powers[i]] for i in range(self.N)]
+        waveguide = [[wavelengths[i], self.powers[i]] for i in range(self.N)]
         
         if self.external:
             waveguide.append([wavelengthIn, signalIn.pop(0)])
             self.signalIn = signalIn
         self.waveguide = np.array(waveguide) # waveguide[wavelength, power]
         self.testConstraints()
+        
     
     
     def getState(self, i):
@@ -95,14 +97,14 @@ class network:
             yield
             split_waveguide = copy.deepcopy(self.waveguide)
             split_waveguide[:,1] /= self.N
-            
             for i,node in enumerate(self.neurons):
-                self.waveguide[i,1] *= node.act(split_waveguide)
+                self.waveguide[i,1] = self.powers[i] * node.act(split_waveguide)
             
             if self.external: 
                 self.waveguide[self.N,1] = self.signalIn.pop(0)
                 if len(self.signalIn) == 0:
                     done = True
+            
         yield
     
 
