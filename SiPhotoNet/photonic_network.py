@@ -47,7 +47,7 @@ import copy
 
 class network:
 
-    def __init__(self, weights, wavelengths = [1551.1e-9], powers = [25e-3], weightsIn = [], wavelengthIn = None, signalIn = []):
+    def __init__(self, weights, wavelengths = [1551.1e-9], powers = [25e-3]):
         """
             A network instance has a list of neurons, and a waveguide (a list
             of signals). Need to provide a square matrix of weights to the network.
@@ -59,23 +59,19 @@ class network:
         """
         
         self.N = len(weights) # number of neurons (network size)
-        self.external = len(weightsIn) > 0 # external input to network (no dedicated neuron)
-        for i,weight in enumerate(weightsIn): weights[i].append(weight)
+        self.external = len(weights[0]) > self.N  # external input to network (no dedicated neuron)
         
-        wavelengths = [wavelengths[0] + 2*i*1e-9 for i in range(self.N)] # spectral spacing of signal
-        self.powers = [powers[0] for i in range(self.N)] # inital power of pumps
-        
+        N = self.N
+        if self.external: N += 1
+        if len(wavelengths) < N: wavelengths = [wavelengths[0] + 2*i*1e-9 for i in range(N)] # spectral spacing of signal
+        self.powers = [p for p in powers] # inital power of pumps
+        if len(self.powers) < N: self.powers *= N
+ 
+        self.waveguide = np.array([[wavelengths[i], self.powers[i]] for i in range(N)]) # waveguide[wavelength, power]        
         self.neurons = [neuron(weights[i], wavelengths[i]) for i in range(self.N)]
-        waveguide = [[wavelengths[i], self.powers[i]] for i in range(self.N)]
-        
-        if self.external:
-            waveguide.append([wavelengthIn, signalIn.pop(0)])
-            self.signalIn = signalIn
-        self.waveguide = np.array(waveguide) # waveguide[wavelength, power]
         self.testConstraints()
         
-    
-    
+     
     def getState(self, i):
         """
             Get state of ith waveguide signal.
@@ -83,7 +79,7 @@ class network:
         assert(i > 0 and i <= self.N +1)
         return self.waveguide[i-1,1]
     
-    def simulate(self, pumpSignals = [[1 for i in range(1000)]]): 
+    def simulate(self, pumpSignals = [[]]): 
         """
             Generator will yield new values infinitely* (bounded by the calling 
             loop) or over the length of the input signal if there is one
@@ -101,9 +97,9 @@ class network:
                 self.waveguide[i,1] = self.powers[i] * pumpSignals[i].pop(0) * node.act(split_waveguide)
             
             if self.external: 
-                self.waveguide[self.N,1] = self.signalIn.pop(0)
-                if len(self.signalIn) == 0:
-                    done = True
+                self.waveguide[self.N,1] = self.powers[self.N] * pumpSignals[self.N].pop(0)
+            if 0 in [len(pump) for pump in pumpSignals]:
+                done = True
             
         yield
     
@@ -112,9 +108,12 @@ class network:
         """
             This function uses assert to ensure initialization worked properly
         """
-        assert(len(self.neurons) == self.N) # network rank is number of neurons
-        if self.external: # waveguide has N signals (+1 external signal)
-            assert(len(self.waveguide) == self.N + 1) 
-        else:
-            assert(len(self.waveguide) == self.N)
+        assert(self.neurons is not None)
+        assert(self.waveguide is not None)
+        assert(self.powers is not None)
+        
+        assert(len(self.neurons) == self.N)
+        assert(len(self.waveguide) == self.N + self.external) 
+        assert(len(self.powers) == self.N + self.external)
+
             
