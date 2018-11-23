@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 
 class neuron:
 
-    def __init__(self, weights, wavelength, net_wavelengths = [], mrr_radius = 6e-5, a = 0.99, r1 = 0.92, r2 = 0.92):
+    def __init__(self, weights, wavelength, net_wavelengths = [], mrr_radius =11.5e-6, a = 0.97, r1 = 0.93, r2 = 0.93):
         """
             Neuron takes a list of weights and an output wavelength.
             
@@ -103,7 +103,7 @@ class neuron:
         wavelengths = np.array(wavelengths)
         weights = np.array(weights)
         
-        return weights*1e-3 # [A]
+        return [weight*1e-3 for weight in weights]# [A]
     
     def plotWeightBank(self):
         """
@@ -112,10 +112,12 @@ class neuron:
         lambdas = np.linspace(self.output_wavelength - 5e-9,self.output_wavelength + 5e-9,500)
         plt.figure()
         for i,weight in enumerate(self.weights):
-            plt.plot(lambdas*1e9, self.mrr(weight, lambdas)[:,0], color="C" + str(i))
-            plt.plot(lambdas*1e9, self.mrr(weight, lambdas)[:,1], "--C" + str(i))
-            plt.plot(lambdas*1e9, self.mrr(weight, lambdas)[:,0]+self.mrr(weight, lambdas)[:,1])
-        plt.legend(['Weight: ' + str(w) for i in range(2) for w in self.weights])
+            mrr = self.mrr(weight, lambdas)
+            plt.plot(lambdas*1e9, mrr[:,0], color="C" + str(i))
+            plt.plot(lambdas*1e9, mrr[:,1], "--C" + str(i))
+            plt.plot(lambdas*1e9, mrr[:,0] + mrr[:,1], ":C" + str(i))
+        labels = ['Through', 'Drop', 'Total']
+        plt.legend([labels[i] + ' W=' + str(w*1e3) for w in self.weights for i in range(3)])
         plt.vlines(self.output_wavelength*1e9, 0, 1)
         plt.show()
             

@@ -83,7 +83,7 @@ class network:
         assert(i > 0 and i <= self.N +1)
         return self.waveguide[i-1,1]
     
-    def simulate(self): 
+    def simulate(self, pumpSignals = [[1 for i in range(1000)]]): 
         """
             Generator will yield new values infinitely* (bounded by the calling 
             loop) or over the length of the input signal if there is one
@@ -98,7 +98,7 @@ class network:
             split_waveguide = copy.deepcopy(self.waveguide)
             split_waveguide[:,1] /= self.N
             for i,node in enumerate(self.neurons):
-                self.waveguide[i,1] = self.powers[i] * node.act(split_waveguide)
+                self.waveguide[i,1] = self.powers[i] * pumpSignals[i].pop(0) * node.act(split_waveguide)
             
             if self.external: 
                 self.waveguide[self.N,1] = self.signalIn.pop(0)
