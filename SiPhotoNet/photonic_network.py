@@ -21,9 +21,7 @@
     After initializing the network, call instance.simulate() to obatin the
     generator. With no input signal defined, the generator will generate new 
     network states infinitely. 
-    
-    TODO:
-        - Add network state accessors.
+
 
     
     --- WEIGHT MATRIX CONVENTION ---
@@ -44,10 +42,11 @@
 from photonic_neuron import neuron
 import numpy as np
 import copy
+import matplotlib.pyplot as plt
 
 class network:
 
-    def __init__(self, weights, wavelengths = [1551.1e-9], powers = [25e-3]):
+    def __init__(self, weights, wavelengths = [1550e-9], powers = [25e-3]):
         """
             A network instance has a list of neurons, and a waveguide (a list
             of signals). Need to provide a square matrix of weights to the network.
@@ -57,18 +56,19 @@ class network:
             weights.
             
         """
-        
+        self.weights = weights
         self.N = len(weights) # number of neurons (network size)
         self.external = len(weights[0]) > self.N  # external input to network (no dedicated neuron)
         
         N = self.N
-        if self.external: N += 1
-        if len(wavelengths) < N: wavelengths = [wavelengths[0] + 2*i*1e-9 for i in range(N)] # spectral spacing of signal
+        if self.external: N += len(weights[0])-len(weights)
+        if len(wavelengths) < N: wavelengths = [wavelengths[0] + 5*i*1e-9 for i in range(N)] # spectral spacing of signal
         self.powers = [p for p in powers] # inital power of pumps
         if len(self.powers) < N: self.powers *= N
  
         self.waveguide = np.array([[wavelengths[i], self.powers[i]] for i in range(N)]) # waveguide[wavelength, power]        
-        self.neurons = [neuron(weights[i], wavelengths[i]) for i in range(self.N)]
+        self.neurons = [neuron(weights[i], wavelengths[i], net_wavelengths=wavelengths) for i in range(self.N)]
+        
         self.testConstraints()
         
      
@@ -104,6 +104,16 @@ class network:
         yield
     
 
+    def plotModulators(self):
+        voltages = np.linspace(1.5, 5, 1000)
+        t = [[neur.modulatorTransmission(v) for v in voltages] for neur in self.neurons]
+        plt.plot(voltages, t[0])
+        plt.plot(voltages, t[1])
+        plt.legend(['Wavelength='+str(int(self.waveguide[i,0]*1e9))+'nm' for i in range(self.N)])
+        plt.xlabel('Junction Voltage [V]')
+        plt.ylabel('Transmission [norm.]')
+        plt.show()
+        
     def testConstraints(self):
         """
             This function uses assert to ensure initialization worked properly
@@ -113,7 +123,7 @@ class network:
         assert(self.powers is not None)
         
         assert(len(self.neurons) == self.N)
-        assert(len(self.waveguide) == self.N + self.external) 
-        assert(len(self.powers) == self.N + self.external)
+        assert(len(self.waveguide) == self.N + len(self.weights[0])-len(self.weights)) 
+        assert(len(self.powers) == self.N + len(self.weights[0])-len(self.weights))
 
             
