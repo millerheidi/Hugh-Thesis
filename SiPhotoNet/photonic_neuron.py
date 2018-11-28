@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 
 class neuron:
 
-    def __init__(self, weights, wavelength, net_wavelengths = [], mrr_radius = 11.5e-6, a = 0.97, r1 = 0.93, r2 = 0.93):
+    def __init__(self, weights, wavelength, net_wavelengths = [], mrr_radius = 11.5e-6, a = 0.97, r1 = 0.948, r2 = 0.948):
         """
             Neuron takes a list of weights and an output wavelength.
             
