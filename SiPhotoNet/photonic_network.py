@@ -100,15 +100,13 @@ class network:
                 self.waveguide.signals[self.N] = self.powers[self.N] * pumpSignals[self.N].pop(0)
             if 0 in [len(pump) for pump in pumpSignals]:
                 done = True
-            
         yield
     
 
     def plotModulators(self):
         voltages = np.linspace(1.5, 5, 1000)
-        t = [[neur.modulatorTransmission(v) for v in voltages] for neur in self.neurons]
+        t = [[neur.modulatorTransmission(v, 0.0) for v in voltages] for neur in self.neurons]
         plt.plot(voltages, t[0])
-        plt.plot(voltages, t[1])
         plt.legend(['Wavelength='+str(int(self.waveguide.wavelengths[i]*1e9))+'nm' for i in range(self.N)])
         plt.xlabel('Junction Voltage [V]')
         plt.ylabel('Transmission [norm.]')

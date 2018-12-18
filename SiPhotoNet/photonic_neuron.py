@@ -56,10 +56,9 @@ class neuron:
         thru = 1.0
         drop = 0.0
         for current in self.weights:
-            mrr = self.add_drop_mrr(current, wavelengths)
+            mrr = self.mrrThruDrop(current, wavelengths)
             drop += thru * mrr.drop
             thru *= mrr.thru
-                
         return thru, drop
     
     def detuneByWavelength(self, wavelength, n_0 = np.sqrt(12), i_mod = 0.0, i_heater = 0.0, coeff = 5e2):
@@ -70,31 +69,34 @@ class neuron:
         return (2*np.pi*self.mrr_radius/wavelength) * (n_0 + self.plasmaDispersion(n_0, i_mod) + coeff*i_heater**2) 
     
     def plasmaDispersion(self, n_0, i_mod):
+        """
+        """
         eps0 = 8.854e-12
         c = 3e8
         e = 1.6e-19
         lamb0 = self.output_wavelength
-        me = 1 # TODO: find me, mh vals then use 'real'
+        me = 1 # TODO: find me, mh vals then use 'real' or 'approx'
         mh = 1
         Ne = i_mod
         Nh = i_mod
         real = -((e**2 * lamb0**2)/(8 * math.pi**2 * c**3 * eps0 * n_0))*((Ne/me) + (Nh/mh))
-        return -(8.8e-22*Ne + 8.5e-18*Nh**0.8)
+        approx = -(8.8e-22*Ne + 8.5e-18*Nh**0.8) 
+        return -0.1*i_mod # not correct just estimate
     
-    def add_drop_mrr(self, heater, wavelengths):
+    def mrrThruDrop(self, heater, wavelengths):
         """
         """
         a = self.a
         r1 = self.r1
         r2 = self.r2
-        phis = self.detuneByWavelength(wavelengths, i_heater=heater) # [rad]
+        phis = self.detuneByWavelength(wavelengths, i_heater=heater)
         numerator_t = (r2*a)**2 - 2*r1*r2*a*np.cos(phis) + r1**2 
         numerator_d = (1-r1**2)*(1-r2**2)*a
         denominator = 1 + (a*r1*r2)**2 - 2*r1*r2*a*np.cos(phis)
         class mrr: pass
         mrr.thru = numerator_t/denominator
         mrr.drop = numerator_d/denominator
-        return mrr #np.array([numerator_t/denominator, numerator_d/denominator]).transpose()
+        return mrr
     
     def modulatorTransmission(self, current, I_h):
         """
@@ -134,8 +136,8 @@ class neuron:
         lambdas = np.linspace(self.output_wavelength - 15e-9,self.output_wavelength + 20e-9,500)
         plt.figure()
         for i,weight in enumerate(self.weights):
-            mrr = self.add_drop_mrr(weight, lambdas)
-            plt.plot(lambdas*1e9, mrr.add, color="C" + str(i))
+            mrr = self.mrrThruDrop(weight, lambdas)
+            plt.plot(lambdas*1e9, mrr.thru, color="C" + str(i))
             plt.plot(lambdas*1e9, mrr.drop, "--C" + str(i))
         #labels = ['Through', 'Drop', 'Total']
         #plt.legend([labels[i] + ' W=' + str(w*1e3) for w in self.weights for i in range(3)])
